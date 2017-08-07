@@ -1,0 +1,12 @@
+{
+  "port": 9091,
+  "connectionLimit": 50,
+  "cacheExpiration": "03:00:00",
+  "credentials": {
+    "default": {
+      "tenantId": "xxx",
+      "clientId": "yyy",
+      "clientKey": "zzz"
+    }
+  }
+}

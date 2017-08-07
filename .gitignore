@@ -1,0 +1,12 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/azure_exporter/bin
+/azure_exporter/obj
+/packages
+/.vs
+/azure_exporter/config.json
+*.swp
+*.*~
+/azure_exporter/azure_exporter.csproj.user
