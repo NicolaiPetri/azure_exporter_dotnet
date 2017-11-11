@@ -59,6 +59,9 @@ namespace azure_exporter
                                 DateTime startTime = DateTime.UtcNow;
                                 var httpListenerContext = _httpListener.EndGetContext(ar);
                                 outerContext = httpListenerContext;
+                                // Prepare for next request instantly.
+                                repeatAction.Invoke();
+
                                 string subscriptionId = httpListenerContext.Request.QueryString["subscription_id"] ?? "default";
 
                                 string resourceId = httpListenerContext.Request.QueryString["resource_id"];
@@ -72,7 +75,6 @@ namespace azure_exporter
                                     byte[] buffer = System.Text.Encoding.UTF8.GetBytes("resource_id or resource_type and resource_name is required");
                                     httpListenerContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
                                     httpListenerContext.Response.Close();
-                                    repeatAction.Invoke();
                                     return;
                                 }
 
@@ -110,7 +112,6 @@ namespace azure_exporter
                                     byte[] buffer = System.Text.Encoding.UTF8.GetBytes("resource_id not found!");
                                     httpListenerContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
                                     httpListenerContext.Response.Close();
-                                    repeatAction.Invoke();
                                     return;
                                  }
 
@@ -124,7 +125,6 @@ namespace azure_exporter
                                     byte[] buffer = System.Text.Encoding.UTF8.GetBytes("Readmetrics failed for resource "+resourceId);
                                     httpListenerContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
                                     httpListenerContext.Response.Close();
-                                    repeatAction.Invoke();
                                     return;
                                 }
 
@@ -137,22 +137,26 @@ namespace azure_exporter
                             }
                             catch (Exception e)
                             {
-                                Console.WriteLine(string.Format("Error in MetricsServer: {0}", e));
+                                Console.WriteLine(string.Format("Inner error in MetricsServer: {0}", e));
                                 if (outerContext != null)
                                 {
+                                    try { 
                                     outerContext.Response.StatusCode = 500;
                                     byte[] buffer = System.Text.Encoding.UTF8.GetBytes("Exception: " + e.ToString());
                                     outerContext.Response.OutputStream.Write(buffer, 0, buffer.Length);
-                                    outerContext.Response.Close();
+                                    
+                                        outerContext.Response.Close();
+                                    } catch (Exception ie)
+                                    {
+                                        Console.WriteLine("outputstream cleanup failed: {0}", ie.ToString());
+                                    }
                                 }
                             }
-                            repeatAction.Invoke();
                         }, null);
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine(string.Format("Error in MetricsServer: {0}", e));
-                        repeatAction.Invoke();
+                        Console.WriteLine(string.Format("Outer error in MetricsServer: {0}", e));
                     }
                 }
             );
